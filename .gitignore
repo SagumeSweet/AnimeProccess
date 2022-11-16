@@ -1,0 +1,10 @@
+__pycache__
+/.idea
+/venv
+/conf.json
+.vscode
+/extensions
+*.spec
+/build
+/dist
+

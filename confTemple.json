@@ -1,0 +1,26 @@
+{
+    "path": "",
+    "videoConditions": {
+        "in": [
+            ".mkv"
+        ],
+        "not in": []
+    },
+    "cut_conf": {
+        "front": "x",
+        "behind": "x"
+    },
+    "process_conf": {
+        "replace": [],
+        "fAdd": "",
+        "bAdd": "",
+        "add_episode": {
+            "value": 0,
+            "episode_index": -2
+        },
+        "session": {
+            "value": "03",
+            "episode_index": -2
+        }
+    }
+}

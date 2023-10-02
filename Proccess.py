@@ -1,6 +1,8 @@
 import os
 import json
 from sys import exit
+from time import sleep
+from copy import deepcopy
 
 
 def example(str_):
@@ -27,6 +29,18 @@ def rename(file_list, process_conf_, cut_conf_):
     if cut_conf_['front'] != 'x' and cut_conf_['behind'] != 'x':
         front = cut_conf_['front']
         behind = cut_conf_['behind']
+    elif cut_conf_['front'] != 'x' and cut_conf_['behind'] == 'x':
+        file_list[0].example()
+        front = cut_conf_['front']
+        print('如果只替换，直接回车')
+        print('前：' + str(cut_conf_['front']))
+        behind = input('后：')
+    elif cut_conf_['front'] == 'x' and cut_conf_['behind'] != 'x':
+        file_list[0].example()
+        print('如果只替换，直接回车')
+        front = input('前：')
+        print('后：' + str(cut_conf_['behind']))
+        behind = cut_conf_['behind']
     else:
         file_list[0].example()
         print('如果只替换，直接回车')
@@ -42,8 +56,16 @@ def rename(file_list, process_conf_, cut_conf_):
     if not confirm(rename_list):
         rename(file_list, process_conf_, cut_conf_)
     else:
+        count = 1
         for i_ in rename_list:
-            os.rename(i_['old'], i_['new'])
+            while True:
+                try:
+                    os.rename(i_['old'], i_['new'])
+                    break
+                except PermissionError:
+                    print("ERROR:重命名错误（疑似文件正在使用中），正在重试第" + count.__str__() + "次")
+                    sleep(10)
+                    count += 1
 
 
 def process(name_, process_products):
@@ -59,8 +81,10 @@ def process(name_, process_products):
     name_n = name_n.replace(']', '')
     # 处理集数
     if process_products['add_episode']['value'] != 0:
-        episode = int(name_n[process_products['add_episode']['episode_index']:]) + process_products['add_episode']['value']
-        name_n = name_n[:process_products['add_episode']['episode_index']] + episode_to_str(episode, process_products['add_episode']['episode_index'])
+        episode = int(name_n[process_products['add_episode']['episode_index']:]) + process_products['add_episode'][
+            'value']
+        name_n = name_n[:process_products['add_episode']['episode_index']] + episode_to_str(episode, process_products[
+            'add_episode']['episode_index'])
     # 处理季数
     if process_products['session']['value'] != '':
         episode_index = -2
@@ -96,17 +120,26 @@ def if_sub(video, sub):
     return True
 
 
-def getFile(name: str, conditions: dict):
-    result = True
+def foreach_video_filter_conditions(conditions: list, proc_fuc) -> bool:
+    result_list = []
+    for condition in conditions:
+        condition_result = True
+        for option in condition:
+            condition_result = proc_fuc(option)
+            if not condition_result:
+                break
+        result_list.append(condition_result)
+    return True in result_list
+
+
+def video_filter(name: str, conditions: dict) -> bool:
+    in_conditions_result = True
+    not_in_conditions_result = True
     if conditions['in']:
-        for condition in conditions['in']:
-            if condition not in name:
-                result = False
+        in_conditions_result = foreach_video_filter_conditions(conditions['in'], lambda x: x in name)
     if conditions['not in']:
-        for condition in conditions['not in']:
-            if condition in name:
-                result = False
-    return result
+        not_in_conditions_result = foreach_video_filter_conditions(conditions['not in'], lambda x: x not in name)
+    return in_conditions_result and not_in_conditions_result
 
 
 def cutName(front, behind, name):
@@ -136,7 +169,8 @@ def episode_to_str(episode, episode_index):
 def process_main(core_conf):
     # 将设置放进变量
     print(core_conf)
-    path = (core_conf['path'].replace('E:\\Anime\\', 'Y:\\')).replace('E:\\Anime Movie\\', 'X:\\')  # server1路径替换成本地路径
+    path = (core_conf['path'].replace('E:\\Anime\\', 'Y:\\')).replace('E:\\Anime Movie\\', 'X:\\').replace(
+        "G:\\Anime\\", "U:\\").replace("G:\\Movie\\", "T:\\")  # server1路径替换成本地路径
     video_conditions = core_conf['videoConditions']
     process_conf = core_conf['process_conf']
     cut_conf = core_conf['cut_conf']
@@ -148,17 +182,21 @@ def process_main(core_conf):
     video_list = []
     for i in os.listdir(path):
         all_file.append(i)
+    other_list = deepcopy(all_file)
+
     # 筛选视频
     for i in range(len(all_file)):
-        if getFile(all_file[i], video_conditions):
+        if video_filter(all_file[i], video_conditions):
             video_list.append(Video(path, all_file[i], -4))
+            other_list.remove(all_file[i])
 
     if len(video_list) < 1:
         print("No videos are there!")
         exit()
 
+    # 获取字幕
     for i in video_list:
-        i.get_sub(all_file)
+        i.get_sub(other_list)
 
     # 改名
     rename(video_list, process_conf, cut_conf)
@@ -184,7 +222,7 @@ class Video(File):
     def get_sub(self, file_list):
         num_ex = len(self.name)
         for i_ in file_list:
-            if if_sub(self.name, i_) and '.mkv' not in i_:
+            if if_sub(self.name, i_) and ('.mkv' not in i_) and ('.mp4' not in i_):
                 self.subs.append(File(self.path, i_, num_ex))
 
     def example(self):
@@ -194,8 +232,15 @@ class Video(File):
 conf = {
     'path': r'',
 
-    # 筛选文件
-    'videoConditions': {'in': ['.mkv'], 'not in': []},
+    # 筛选文件，in/not in中每个列表之间是或，列表内是与
+    'videoConditions': {
+        'in': [
+            ['.mkv']
+        ],
+        'not in': [
+            []
+        ]
+    },
 
     'cut_conf': {
         # 从哪里开始切片，为x时需要键入

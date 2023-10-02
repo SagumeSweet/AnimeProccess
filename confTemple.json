@@ -2,9 +2,12 @@
     "path": "",
     "videoConditions": {
         "in": [
-            ".mkv"
+            [".mkv"],
+            [".mp4"]
         ],
-        "not in": []
+        "not in": [
+            []
+        ]
     },
     "cut_conf": {
         "front": "x",
@@ -19,7 +22,7 @@
             "episode_index": -2
         },
         "session": {
-            "value": "03",
+            "value": "",
             "episode_index": -2
         }
     }

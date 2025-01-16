@@ -1,29 +1,40 @@
 {
-    "path": "",
+    "path": {
+        "path_str": "",
+        "path_replace": [
+        ]
+    },
     "videoConditions": {
         "in": [
             [".mkv"],
             [".mp4"]
         ],
         "not in": [
-            []
         ]
     },
-    "cut_conf": {
-        "front": "x",
-        "behind": "x"
-    },
+
     "process_conf": {
-        "replace": [],
+        "replace": [
+            ["][", " "],
+            ["]", ""],
+            ["[", ""],
+            ["- ", ""],
+            ["  ", " "]
+        ],
+        "cut_conf": {
+          "front": "x",
+          "behind": "x"
+        },
         "fAdd": "",
         "bAdd": "",
-        "add_episode": {
-            "value": 0,
-            "episode_index": -2
+        "episode_index": {
+            "value": "x",
+            "num_length": 2,
+            "add_episode": 0
         },
         "session": {
             "value": "",
-            "episode_index": -2
+            "num_length": 2
         }
     }
 }

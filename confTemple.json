@@ -1,40 +1,52 @@
 {
-    "path": {
-        "path_str": "",
-        "path_replace": [
-        ]
+  "path": {
+    "path_str": "",
+    "path_replace": []
+  },
+  "videoConditions": {
+    "in": [
+      [
+        ".mkv"
+      ],
+      [
+        ".mp4"
+      ]
+    ],
+    "not in": []
+  },
+  "process_conf": {
+    "replace": [
+      [
+        "][",
+        " "
+      ],
+      [
+        "]",
+        ""
+      ],
+      [
+        "[",
+        ""
+      ],
+      [
+        "  ",
+        " "
+      ]
+    ],
+    "cut_conf": {
+      "front": null,
+      "behind": null
     },
-    "videoConditions": {
-        "in": [
-            [".mkv"],
-            [".mp4"]
-        ],
-        "not in": [
-        ]
+    "fAdd": "",
+    "bAdd": "",
+    "episode": {
+      "value": null,
+      "num_length": 2,
+      "add_episode": 0
     },
-
-    "process_conf": {
-        "replace": [
-            ["][", " "],
-            ["]", ""],
-            ["[", ""],
-            ["- ", ""],
-            ["  ", " "]
-        ],
-        "cut_conf": {
-          "front": "x",
-          "behind": "x"
-        },
-        "fAdd": "",
-        "bAdd": "",
-        "episode_index": {
-            "value": "x",
-            "num_length": 2,
-            "add_episode": 0
-        },
-        "session": {
-            "value": "",
-            "num_length": 2
-        }
+    "season": {
+      "value": null,
+      "num_length": 2
     }
+  }
 }

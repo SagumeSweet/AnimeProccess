@@ -1,10 +1,11 @@
-import json
 import os
+import re
 from copy import deepcopy
 from sys import exit
 from time import sleep
+from typing import Callable, Any, Optional
 
-from Model.Config import Config, PathConfig, VideoFilterConfig, ProcessConfig, CutConfig, EpisodeConfig
+from Config import RenameConfig, PathConfig, VideoFilterConfig, ProcessConfig, CutConfig, EpisodeConfig, ConfigLoader, NullSettingValues
 
 
 def example(str_):
@@ -25,15 +26,15 @@ def example(str_):
 
 
 def get_cut_index(config: CutConfig) -> tuple[str, str]:
-    if config.start_index != 'x' and config.end_index != 'x':
+    if config.start_index != NullSettingValues.CUT_INDEX.value and config.end_index != NullSettingValues.CUT_INDEX.value:
         start = config.start_index
         end = config.end_index
-    elif config.start_index != 'x' and config.end_index == 'x':
+    elif config.start_index != NullSettingValues.CUT_INDEX.value and config.end_index == NullSettingValues.CUT_INDEX.value:
         start = config.start_index
         print('如果只替换，直接回车')
         print('前：' + str(config.start_index))
         end = input('后：')
-    elif config.start_index == 'x' and config.end_index != 'x':
+    elif config.start_index == NullSettingValues.CUT_INDEX.value and config.end_index != NullSettingValues.CUT_INDEX.value:
         print('如果只替换，直接回车')
         start = input('前：')
         print('后：' + str(config.end_index))
@@ -46,13 +47,13 @@ def get_cut_index(config: CutConfig) -> tuple[str, str]:
     return start, end
 
 
-def get_episode_index(episode_conf: EpisodeConfig) -> int | str:
-    if episode_conf.value != "x":
+def get_episode_index(episode_conf: EpisodeConfig) -> Any:
+    if episode_conf.value != NullSettingValues.NUM.value:
         return episode_conf.value
     else:
         print("如果无需集数，直接回车")
         index = input("index=")
-        return int(index) if index != "" else "x"
+        return int(index) if index != "" else NullSettingValues.NUM.value
 
 
 def try_rename_file(rename_dict: dict, count: int = 1) -> None:
@@ -63,15 +64,16 @@ def try_rename_file(rename_dict: dict, count: int = 1) -> None:
         print(f"ERROR:重命名错误（疑似文件正在使用中），正在重试第{count}次")
         sleep(10)
         try_rename_file(rename_dict, count + 1)
+        return None
 
 
 def rename(file_list: list["Video"], process_conf_: ProcessConfig):
     # 输入处理方案
     file_list[0].example()
     start, end = get_cut_index(process_conf_.cut_conf)
-    episode_index: int | str = get_episode_index(process_conf_.episode)
+    episode_index = get_episode_index(process_conf_.episode)
     # 重命名
-    rename_list = []
+    rename_list: list[Optional[dict[str, str]]] = []
     for i_ in file_list:
         rename_list.append(i_.rename(start, end, episode_index, process_conf_))
         for j in i_.subs:
@@ -83,14 +85,16 @@ def rename(file_list: list["Video"], process_conf_: ProcessConfig):
             try_rename_file(i_)
 
 
-def process(cut_strat: str, cut_end: str, episode_index: int | str, name_, config: ProcessConfig):
+def process(cut_strat: str, cut_end: str, episode_index: Optional[int], name_, config: ProcessConfig, default_season: Optional[int] = None):
     name_n = name_
 
-    episode_num: int | str = get_episode_num(episode_index, name_) if episode_index != "x" else "x"
-    episode_phrase: str = get_episode_phrase(episode_index, name_) if episode_index != "x" else ""
-
-    if episode_phrase != "":
+    if episode_index != NullSettingValues.NUM.value:
+        episode_num = get_episode_num(episode_index, name_)
+        episode_phrase: str = get_episode_phrase(episode_index, name_)
         name_n = name_n.replace(episode_phrase, "")
+    else:
+        episode_num = NullSettingValues.NUM.value
+        episode_phrase = ""
 
     # 裁剪
     name_n = cut_name(cut_strat, cut_end, name_n, episode_phrase, name_)
@@ -104,17 +108,20 @@ def process(cut_strat: str, cut_end: str, episode_index: int | str, name_, confi
     head: str = config.head_add
     tail: str = config.tail_add
     # 处理集数
-    if episode_num != "x":
+    if episode_num != NullSettingValues.NUM.value:
         episode_num += config.episode.add_episode
         head = f"E{num_to_str(episode_num, config.episode.length)} {head}"
 
     # 处理季数
-    if config.season.value != "" and episode_num != "x":
+    if config.season.value != NullSettingValues.NUM.value and episode_num != NullSettingValues.NUM.value:
         head = f"S{num_to_str(config.season.value, config.season.length)}{head}"
+    elif default_season is not None:
+        head = f"S{num_to_str(default_season, config.season.length)}{head}"
 
     name_n = head + name_n
     name_n += tail
 
+    name_n = name_n.strip()
     return name_n
 
 
@@ -126,6 +133,7 @@ def confirm(file_list):
         return True
     elif user_confirm == 'exit':
         exit()
+        return None
     else:
         return False
 
@@ -137,7 +145,7 @@ def if_sub(video, sub):
     return True
 
 
-def foreach_video_filter_configs(configs: list, proc_fuc) -> bool:
+def foreach_video_filter_configs(configs: list, proc_fuc: Callable) -> bool:
     results_list = []
     for config in configs:
         result = True
@@ -181,14 +189,14 @@ def get_episode_phrase(episode_index: int, name: str) -> str:
     now_char = name[now_index]
     while ((episode_index < 0 and now_index >= -len(name) and (now_char != ' ' and now_char != ']' and now_char != '-'))
            or (episode_index > 0 and now_index >= 0 and (now_char != ' ' and now_char != ']' and now_char != '-'))):
-        result_str = now_char + result_str
+        result_str = f"{now_char}{result_str}"
         now_index -= 1
         now_char = name[now_index]
-    result_str = now_char + result_str
+    result_str = f"{now_char}{result_str}" if name[now_index - 1] != "-" else f"-{now_char}{result_str}"
     return result_str
 
 
-def get_new_cut_index(index: int, episode_str: str, episode_index: int | str, old_name_length: int, new_name_length: int) -> int:
+def get_new_cut_index(index: int, episode_str: str, episode_index: int, old_name_length: int, new_name_length: int) -> int:
     if episode_str == "":
         return index
     del_length: int = len(episode_str)
@@ -243,13 +251,23 @@ def num_to_str(num: int, format_length: int) -> str:
 
 def get_real_path(config: PathConfig) -> str:
     result: str = config.path_str
-    path_replace_list: list[list[str, str]] = config.path_replace
+    path_replace_list: list[tuple[str, str]] = config.path_replace
     for i in range(len(path_replace_list)):
         result = result.replace(path_replace_list[i][0], path_replace_list[i][1])
     return result
 
 
-def process_main(config: Config):
+def extract_season_number(folder_path: str, num_length: int = 2) -> int | None:
+    """
+    从文件夹路径提取季数，返回整数；如果没有符合要求的部分，则返回 None。
+    """
+    match = re.search(rf'S(\d{{{num_length}}})', folder_path)
+    if match is not None:
+        return int(match.group(1))
+    return None
+
+
+def process_main(config: RenameConfig):
     print(config)
     path = get_real_path(config.path)  # server1路径替换成本地路径
 
@@ -271,8 +289,7 @@ def process_main(config: Config):
             other_list.remove(all_file[i])
 
     if len(video_list) < 1:
-        print("No videos are there!")
-        exit()
+        raise FileNotFoundError("No videos are there!")
 
     # 获取字幕
     for i in video_list:
@@ -292,8 +309,8 @@ def get_ext(name: str) -> str:
 
 
 class File(object):
-    def __init__(self, path_, name_):
-        self.path = path_
+    def __init__(self, path, name_):
+        self.path = path
         self.extension = get_ext(name_)
         self.name = name_.replace(self.extension, "")
 
@@ -301,16 +318,26 @@ class File(object):
     def oa_name(self):
         return os.path.join(self.path, f"{self.name}{self.extension}")
 
-    def rename(self, front_: int | str, behind_: int | str, episode_index: str | int, process_conf_: ProcessConfig):
-        if episode_index != "x":
+    def rename(self, front_: int | str, behind_: int | str, episode_index: str | Any, process_conf_: ProcessConfig) -> dict[str, str]:
+        if episode_index != NullSettingValues.NUM.value:
             episode_index = int(episode_index)
-        new = os.path.join(self.path, process(front_, behind_, episode_index, self.name, process_conf_) + self.extension)
+        new = os.path.join(
+            self.path,
+            process(
+                front_,
+                behind_,
+                episode_index,
+                self.name,
+                process_conf_,
+                default_season=extract_season_number(self.path, process_conf_.season.length)
+            ) + self.extension
+        )
         return {'old': self.oa_name, 'new': new}
 
 
 class Video(File):
-    def __init__(self, path_, name_):
-        super().__init__(path_, name_)
+    def __init__(self, path, name_):
+        super().__init__(path, name_)
         self.subs: list[File] = []
 
     def get_sub(self, file_list):
@@ -325,48 +352,7 @@ class Video(File):
         example(self.name)
 
 
-conf = {
-    "path": {
-        "path_str": "",
-        "path_replace": [
-        ]
-    },
-    "videoConditions": {
-        "in": [
-            [".mkv"],
-            [".mp4"]
-        ],
-        "not in": [
-        ]
-    },
-
-    "process_conf": {
-        "replace": [
-            ["][", " "],
-            ["]", ""],
-            ["[", ""],
-            ["- ", ""],
-            ["  ", " "]
-        ],
-        "cut_conf": {
-          "front": "x",
-          "behind": "x"
-        },
-        "fAdd": "",
-        "bAdd": "",
-        "episode_index": {
-            "value": "x",
-            "num_length": 2,
-            "add_episode": 0
-        },
-        "session": {
-            "value": "",
-            "num_length": 2
-        }
-    }
-}
-
 if __name__ == "__main__":
-    with open("conf.json", "r", encoding="utf-8") as confFile:
-        confJson = json.load(confFile)
-    process_main(Config(confJson))
+    conf: RenameConfig = ConfigLoader.load("conf.json")
+    process_main(conf)
+    # ConfigGenerator.generate_default_config()

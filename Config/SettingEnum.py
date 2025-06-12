@@ -13,7 +13,7 @@ class ExtensionSuffixes(StrEnum):
     FLAC = ".flac"
 
 
-class DefaultSettingKeys(Enum):
+class DefaultSettingKeys(StrEnum):
     PATH = "path"
     PATH_STRING = "path_str"
     PATH_REPLACE = "path_replace"
@@ -29,13 +29,37 @@ class DefaultSettingKeys(Enum):
     TAIL_ADD = "bAdd"
     VALUE = "value"
     NUM_LENGTH = "num_length"
-    EPISODE_INDEX = "episode_index"
+    EPISODE = "episode"
     ADD_EPISODE = "add_episode"
-    SEASON = "session"
+    SEASON = "season"
     PROP = "prop"
 
 
+class NullSettingValues(Enum):
+    CUT_INDEX = None
+    NUM = None
+
+
 class DefaultSettingValues(Enum):
-    CUT_INDEX = "x"
-    SEASON = ""
-    PROP = -1
+    PATH_STRING = ""
+    PATH_REPLACE = []
+    INCLUDE_TYPES = [
+        [VideoSuffixes.MKV],
+        [VideoSuffixes.MP4]
+    ]
+    NOT_INCLUDE_TYPES = []
+    REPLACE = [
+        ["][", " "],
+        ["]", ""],
+        ["[", ""],
+        ["  ", " "]
+    ]
+    START_INDEX = NullSettingValues.CUT_INDEX.value
+    END_INDEX = NullSettingValues.CUT_INDEX.value
+    HEAD_ADD = ""
+    TAIL_ADD = ""
+    EPISODE = NullSettingValues.NUM.value
+    EPISODE_LENGTH = 2
+    ADD_EPISODE = 0
+    SEASON = NullSettingValues.NUM.value
+    SEASON_LENGTH = 2

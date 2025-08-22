@@ -71,6 +71,15 @@ class EpisodeConfig(NumConfig):
     def add_episode(self) -> int:
         return self._source[DefaultSettingKeys.ADD_EPISODE]
 
+class EpisodePhraseBoundariesConfig(BaseConfig):
+    @property
+    def left_boundaries(self) -> list[str]:
+        return self._source[DefaultSettingKeys.LEFT_BOUNDARIES]
+
+    @property
+    def right_boundaries(self) -> list[str]:
+        return self._source[DefaultSettingKeys.RIGHT_BOUNDARIES]
+
 
 class ProcessConfig(BaseConfig):
     @property
@@ -97,6 +106,10 @@ class ProcessConfig(BaseConfig):
     def cut_conf(self) -> CutConfig:
         return self._lazy_load(DefaultSettingKeys.CUT_CONF, CutConfig)
 
+    @property
+    def episode_phrase_boundaries(self) -> EpisodePhraseBoundariesConfig:
+        return self._lazy_load(DefaultSettingKeys.EPISODE_PHRASE_BOUNDARIES, EpisodePhraseBoundariesConfig)
+
 
 class RenameConfig(BaseConfig):
     @property
@@ -110,3 +123,4 @@ class RenameConfig(BaseConfig):
     @property
     def process_config(self) -> ProcessConfig:
         return self._lazy_load(DefaultSettingKeys.PROCESS_CONF, ProcessConfig)
+

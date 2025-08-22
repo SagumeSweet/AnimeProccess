@@ -29,6 +29,10 @@ class ConfigGenerator:
             DefaultSettingKeys.SEASON: {
                 DefaultSettingKeys.VALUE: DefaultSettingValues.SEASON.value,
                 DefaultSettingKeys.NUM_LENGTH: DefaultSettingValues.SEASON_LENGTH.value,
+            },
+            DefaultSettingKeys.EPISODE_PHRASE_BOUNDARIES: {
+                DefaultSettingKeys.LEFT_BOUNDARIES: DefaultSettingValues.LEFT_BOUNDARIES.value,
+                DefaultSettingKeys.RIGHT_BOUNDARIES: DefaultSettingValues.RIGHT_BOUNDARIES.value,
             }
         }
     }

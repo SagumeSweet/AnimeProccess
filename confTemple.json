@@ -47,6 +47,18 @@
     "season": {
       "value": null,
       "num_length": 2
+    },
+    "episode_phrase_boundaries": {
+      "left_boundaries": [
+        " ",
+        "[",
+        "-"
+      ],
+      "right_boundaries": [
+        " ",
+        "]",
+        "-"
+      ]
     }
   }
 }

@@ -33,6 +33,9 @@ class DefaultSettingKeys(StrEnum):
     ADD_EPISODE = "add_episode"
     SEASON = "season"
     PROP = "prop"
+    EPISODE_PHRASE_BOUNDARIES = "episode_phrase_boundaries"
+    LEFT_BOUNDARIES = "left_boundaries"
+    RIGHT_BOUNDARIES = "right_boundaries"
 
 
 class NullSettingValues(Enum):
@@ -63,3 +66,5 @@ class DefaultSettingValues(Enum):
     ADD_EPISODE = 0
     SEASON = NullSettingValues.NUM.value
     SEASON_LENGTH = 2
+    LEFT_BOUNDARIES = [" ", "[", "-"]
+    RIGHT_BOUNDARIES = [" ", "]", "-"]

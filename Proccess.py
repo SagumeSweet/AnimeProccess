@@ -6,6 +6,7 @@ from time import sleep
 from typing import Callable, Any, Optional
 
 from Config import RenameConfig, PathConfig, VideoFilterConfig, ProcessConfig, CutConfig, EpisodeConfig, ConfigLoader, NullSettingValues
+from Config.RenameConfig import EpisodePhraseBoundariesConfig
 
 
 def example(str_):
@@ -90,7 +91,7 @@ def process(cut_strat: str, cut_end: str, episode_index: Optional[int], name_, c
 
     if episode_index != NullSettingValues.NUM.value:
         episode_num = get_episode_num(episode_index, name_)
-        episode_phrase: str = get_episode_phrase(episode_index, name_)
+        episode_phrase: str = get_episode_phrase(episode_index, name_, config.episode_phrase_boundaries)
         name_n = name_n.replace(episode_phrase, "")
     else:
         episode_num = NullSettingValues.NUM.value
@@ -176,19 +177,19 @@ def get_episode_num(episode_index: int, name: str) -> int:
     return int(result_str)  # TODO:增加index错误时的处理
 
 
-def get_episode_phrase(episode_index: int, name: str) -> str:
+def get_episode_phrase(episode_index: int, name: str, boundaries_config: EpisodePhraseBoundariesConfig) -> str:
     result_str: str = ""
     now_index: int = episode_index
     now_char: str = name[episode_index]
-    while ((episode_index < 0 and now_index < 0 and (now_char != ' ' and now_char != '[' and now_char != '-'))
-           or (episode_index > 0 and now_index < len(name) and (now_char != ' ' and now_char != '[' and now_char != '-'))):
+    while ((episode_index < 0 and now_index < 0 and (now_char not in boundaries_config.right_boundaries))
+           or (episode_index > 0 and now_index < len(name) and (now_char not in boundaries_config.right_boundaries))):
         result_str += now_char
         now_index += 1
         now_char = name[now_index]
     now_index = episode_index - 1
     now_char = name[now_index]
-    while ((episode_index < 0 and now_index >= -len(name) and (now_char != ' ' and now_char != ']' and now_char != '-'))
-           or (episode_index > 0 and now_index >= 0 and (now_char != ' ' and now_char != ']' and now_char != '-'))):
+    while ((episode_index < 0 and now_index >= -len(name) and (now_char not in boundaries_config.left_boundaries))
+           or (episode_index > 0 and now_index >= 0 and (now_char not in boundaries_config.left_boundaries))):
         result_str = f"{now_char}{result_str}"
         now_index -= 1
         now_char = name[now_index]

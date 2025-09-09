@@ -1,6 +1,6 @@
-from typing import Callable, Any
+from typing import Callable, Any, override
 
-from .SettingEnum import DefaultSettingKeys, NullSettingValues
+from .SettingEnum import DefaultSettingKeys, NullSettingValues, SpecialSettingValues
 
 
 class BaseConfig(object):
@@ -15,6 +15,10 @@ class BaseConfig(object):
         if key not in self._cache:
             self._cache[key] = loader(self._source[key])
         return self._cache[key]
+
+    @property
+    def _err_msg(self) -> str:
+        return "Invalid value type."
 
 
 class PathConfig(BaseConfig):
@@ -38,38 +42,63 @@ class VideoFilterConfig(BaseConfig):
 
 
 class CutConfig(BaseConfig):
+    @override
+    @property
+    def _err_msg(self) -> str:
+        return f"Invalid value type: {type(self._source[DefaultSettingKeys.START_INDEX])} or {type(self._source[DefaultSettingKeys.END_INDEX])}. Expected int or {type(NullSettingValues.CUT_INDEX.value)}."
+
     @property
     def start_index(self) -> Any:
         result = self._source[DefaultSettingKeys.START_INDEX]
         if type(result) is not int and type(result) is not type(NullSettingValues.CUT_INDEX.value):
-            raise ValueError(f"Invalid value type: {type(result)}. Expected int or {type(NullSettingValues.CUT_INDEX.value)}.")
+            raise ValueError(self._err_msg)
         return result
 
     @property
     def end_index(self) -> Any:
         result = self._source[DefaultSettingKeys.END_INDEX]
         if type(result) is not int and type(result) is not type(NullSettingValues.CUT_INDEX.value):
-            raise ValueError(f"Invalid value type: {type(result)}. Expected int or {type(NullSettingValues.CUT_INDEX.value)}.")
+            raise ValueError(self._err_msg)
         return result
 
 
 class NumConfig(BaseConfig):
+    def _is_value_valid(self) -> bool:
+        return type(self._source[DefaultSettingKeys.VALUE]) is int or self._source[DefaultSettingKeys.VALUE] == NullSettingValues.NUM.value
+
+    @override
+    @property
+    def _err_msg(self) -> str:
+        return f"Invalid value type: {type(self._source[DefaultSettingKeys.VALUE])}. Expected int or {type(NullSettingValues.NUM.value)}."
+
     @property
     def value(self) -> Any:
-        result = self._source[DefaultSettingKeys.VALUE]
-        if type(result) is not int and type(result) is not type(NullSettingValues.NUM.value):
-            raise ValueError(f"Invalid value type: {type(result)}. Expected int or {type(NullSettingValues.NUM.value)}.")
-        return result
+        if not self._is_value_valid():
+            raise ValueError(self._err_msg)
+        return self._source[DefaultSettingKeys.VALUE]
 
     @property
     def length(self) -> int:
         return self._source[DefaultSettingKeys.NUM_LENGTH]
 
 
+class SeasonNumConfig(NumConfig):
+    @override
+    def _is_value_valid(self) -> bool:
+        value = self._source[DefaultSettingKeys.VALUE]
+        return type(value) is int or value == NullSettingValues.NUM.value or value == SpecialSettingValues.AUTO.value
+
+    @override
+    @property
+    def _err_msg(self) -> str:
+        return f"Invalid value type: {type(self._source[DefaultSettingKeys.VALUE])}. Expected int or {type(NullSettingValues.NUM.value)} or 'auto'."
+
+
 class EpisodeConfig(NumConfig):
     @property
     def add_episode(self) -> int:
         return self._source[DefaultSettingKeys.ADD_EPISODE]
+
 
 class EpisodePhraseBoundariesConfig(BaseConfig):
     @property
@@ -96,7 +125,7 @@ class ProcessConfig(BaseConfig):
 
     @property
     def season(self) -> NumConfig:
-        return self._lazy_load(DefaultSettingKeys.SEASON, NumConfig)
+        return self._lazy_load(DefaultSettingKeys.SEASON, SeasonNumConfig)
 
     @property
     def episode(self) -> EpisodeConfig:
@@ -123,4 +152,3 @@ class RenameConfig(BaseConfig):
     @property
     def process_config(self) -> ProcessConfig:
         return self._lazy_load(DefaultSettingKeys.PROCESS_CONF, ProcessConfig)
-

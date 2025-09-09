@@ -7,6 +7,7 @@ from typing import Callable, Any, Optional
 
 from Config import RenameConfig, PathConfig, VideoFilterConfig, ProcessConfig, CutConfig, EpisodeConfig, ConfigLoader, NullSettingValues
 from Config.RenameConfig import EpisodePhraseBoundariesConfig
+from Config.SettingEnum import SpecialSettingValues
 
 
 def example(str_):
@@ -114,10 +115,14 @@ def process(cut_strat: str, cut_end: str, episode_index: Optional[int], name_, c
         head = f"E{num_to_str(episode_num, config.episode.length)} {head}"
 
     # 处理季数
-    if config.season.value != NullSettingValues.NUM.value and episode_num != NullSettingValues.NUM.value:
-        head = f"S{num_to_str(config.season.value, config.season.length)}{head}"
-    elif default_season is not None:
-        head = f"S{num_to_str(default_season, config.season.length)}{head}"
+    if episode_num != NullSettingValues.NUM.value:
+        if config.season.value is int:
+            head = f"S{num_to_str(config.season.value, config.season.length)}{head}"
+        elif config.season.value == SpecialSettingValues.AUTO.value:
+            if default_season is not None:
+                head = f"S{num_to_str(default_season, config.season.length)}{head}"
+            else:
+                raise ValueError("自动季数提取失败，请检查文件夹名称是否包含季数信息，或手动指定季数")
 
     name_n = head + name_n
     name_n += tail

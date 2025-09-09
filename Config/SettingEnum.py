@@ -42,6 +42,8 @@ class NullSettingValues(Enum):
     CUT_INDEX = None
     NUM = None
 
+class SpecialSettingValues(Enum):
+    AUTO = "auto"
 
 class DefaultSettingValues(Enum):
     PATH_STRING = ""
@@ -64,7 +66,7 @@ class DefaultSettingValues(Enum):
     EPISODE = NullSettingValues.NUM.value
     EPISODE_LENGTH = 2
     ADD_EPISODE = 0
-    SEASON = NullSettingValues.NUM.value
+    SEASON = SpecialSettingValues.AUTO
     SEASON_LENGTH = 2
     LEFT_BOUNDARIES = [" ", "[", "-"]
     RIGHT_BOUNDARIES = [" ", "]", "-"]

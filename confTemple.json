@@ -45,7 +45,7 @@
       "add_episode": 0
     },
     "season": {
-      "value": null,
+      "value": "auto",
       "num_length": 2
     },
     "episode_phrase_boundaries": {

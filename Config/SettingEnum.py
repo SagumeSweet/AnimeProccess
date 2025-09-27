@@ -42,7 +42,7 @@ class NullSettingValues(Enum):
     CUT_INDEX = None
     NUM = None
 
-class SpecialSettingValues(Enum):
+class SpecialSettingValues(StrEnum):
     AUTO = "auto"
 
 class DefaultSettingValues(Enum):

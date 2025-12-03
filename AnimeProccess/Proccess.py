@@ -193,8 +193,8 @@ def get_episode_phrase(episode_index: int, name: str, boundaries_config: Episode
         now_char = name[now_index]
     now_index = episode_index - 1
     now_char = name[now_index]
-    while ((episode_index < 0 and now_index >= -len(name) and (now_char not in boundaries_config.left_boundaries))
-           or (episode_index > 0 and now_index >= 0 and (now_char not in boundaries_config.left_boundaries))):
+    while ((episode_index < 0 and now_index > -len(name) and (now_char not in boundaries_config.left_boundaries))
+           or (episode_index > 0 and now_index >= 1 and (now_char not in boundaries_config.left_boundaries))):
         result_str = f"{now_char}{result_str}"
         now_index -= 1
         now_char = name[now_index]

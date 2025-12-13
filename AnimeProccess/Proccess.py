@@ -5,9 +5,9 @@ from sys import exit
 from time import sleep
 from typing import Callable, Any, Optional
 
-from Config import RenameConfig, PathConfig, VideoFilterConfig, ProcessConfig, CutConfig, EpisodeConfig, ConfigLoader, NullSettingValues
-from Config.RenameConfig import EpisodePhraseBoundariesConfig
-from Config.SettingEnum import SpecialSettingValues
+from .Config import RenameConfig, PathConfig, VideoFilterConfig, ProcessConfig, CutConfig, EpisodeConfig, ConfigLoader, NullSettingValues
+from .Config.RenameConfig import EpisodePhraseBoundariesConfig
+from .Config.SettingEnum import SpecialSettingValues
 
 
 def example(str_):
@@ -356,9 +356,3 @@ class Video(File):
 
     def example(self):
         example(self.name)
-
-
-if __name__ == "__main__":
-    conf: RenameConfig = ConfigLoader.load("conf.json")
-    process_main(conf)
-    # ConfigGenerator.generate_default_config()

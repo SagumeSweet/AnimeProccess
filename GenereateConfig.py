@@ -1,4 +1,4 @@
-from Config import ConfigGenerator
+from AnimeProccess.Config import ConfigGenerator
 
 if __name__ == "__main__":
     ConfigGenerator.generate_default_config()

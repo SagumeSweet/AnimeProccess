@@ -124,10 +124,10 @@ def process(cut_strat: str, cut_end: str, episode_index: Optional[int], name_, c
             else:
                 raise ValueError("自动季数提取失败，请检查文件夹名称是否包含季数信息，或手动指定季数")
 
+    name_n = name_n.strip()
+
     name_n = head + name_n
     name_n += tail
-
-    name_n = name_n.strip()
     return name_n
 
 
